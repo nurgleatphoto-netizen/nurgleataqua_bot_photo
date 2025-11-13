@@ -1,0 +1,41 @@
+# Python кэш
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+
+# Виртуальные окружения
+.venv/
+venv/
+env/
+
+# IDE/редакторы
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Логи и временные файлы
+*.log
+*.tmp
+*.bak
+
+# Настройки окружения и секреты
+.env
+.env.*
+*.secret
+*.key
+
+# Кэш и артефакты
+.cache/
+dist/
+build/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Данные (если будут большие картинки/медиа)
+bot/data/images/
