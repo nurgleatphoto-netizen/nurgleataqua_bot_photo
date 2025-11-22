@@ -138,68 +138,31 @@
 
 <script>
   // ===== 1. ДАННЫЕ ГАЛЕРЕЙ =====
-  // TODO: ЗАМЕНИ ЭТИ URL НА РЕАЛЬНЫЕ 4 ФОТО IAPLC 2025
-  const GALLERIES = {
-    iaplc: {
-      2025: [
-        {
-          url: "https://cloud.jicefrost.com/index.php/s/2pSpFSknxM7ZLiN/download/001.jpg",
-          caption: "IAPLC 2025 — №1"
-        },
-        {
-          url: "https://cloud.jicefrost.com/index.php/s/SiKSe3cm4ccbjWK/download/002.jpg",
-          caption: "IAPLC 2025 — №2"
-        },
-        {
-          url: "https://cloud.jicefrost.com/index.php/s/A2t7qA8XHzAocj3/download/003.jpg",
-          caption: "IAPLC 2025 — №3"
-        },
-        {
-          url: "https://cloud.jicefrost.com/index.php/s/5iBKBYBwXke5w6G/download/004.jpg",
-          caption: "IAPLC 2025 — №4"
-        },
-        {
-          url: "https://cloud.jicefrost.com/index.php/s/Z2feJdCKr9EJcH6/download/005.jpg",
-          caption: "IAPLC 2025 — №5"
-        },
-        {
-          url: "https://cloud.jicefrost.com/index.php/s/PFQaGp7XmZNEtZf/download/006.jpg",
-          caption: "IAPLC 2025 — №6"
-        }
-      ],
-      2024: [
-        {
-          url: "https://cloud.jicefrost.com/index.php/s/bQazzxt5ZckyrKs/download/001.jpg",
-          caption: "IAPLC 2024 — №1"
-        },
-        {
-          url: "https://cloud.jicefrost.com/index.php/s/rZk7MfzbRstyAX9/download/002.jpg",
-          caption: "IAPLC 2024 — №2"
-        },
-        {
-          url: "https://cloud.jicefrost.com/index.php/s/NsXNYPWKS6fJsrK/download/003.jpg",
-          caption: "IAPLC 2024 — №3"
-        },
-        {
-          url: "https://cloud.jicefrost.com/index.php/s/nJNxfxTGASJcayZ/download/004.jpg",
-          caption: "IAPLC 2024 — №4"
-        },
-        {
-          url: "https://cloud.jicefrost.com/index.php/s/TEnCoQiSo6qATwe/download/005.jpg",
-          caption: "IAPLC 2024 — №5"
-        },
-        {
-          url: "https://cloud.jicefrost.com/index.php/s/xSfEPBjdXspmgGD/download/006.jpg",
-          caption: "IAPLC 2024 — №6"
-        },
-        {
-          url: "https://cloud.jicefrost.com/index.php/s/Em2ZJeZgTNMkb63/download/007.jpg"
-          ,
-          caption: "IAPLC 2024 — №7"
-        }
-      ]
+const GALLERY_CONFIG = {
+  iaplc: {
+    2025: {
+      baseUrl: "https://aqualibs.com/images/contest/iaplc/2025/gallery",
+      count: 300,
+      label: "IAPLC 2025"
+    },
+    2024: {
+      baseUrl: "https://aqualibs.com/images/contest/iaplc/2024/gallery",
+      count: 300,
+      label: "IAPLC 2024"
+    },
+    2023: {
+      baseUrl: "https://aqualibs.com/images/contest/iaplc/2023/gallery",
+      count: 300,
+      label: "IAPLC 2023"
+    },
+    2008: {
+      baseUrl: "https://aqualibs.com/images/contest/iaplc/2008/gallery",
+      count: 27,
+      label: "IAPLC 2008"
     }
-  };
+  }
+  // сюда же потом можно добавить другие конкурсы/годы
+};
 
   function parseQuery() {
     const params = new URLSearchParams(window.location.search);
@@ -210,13 +173,24 @@
     };
   }
 
-  function getGallery(contest, year) {
-    const c = GALLERIES[contest];
-    if (!c) return null;
-    const y = c[year];
-    if (!y || !y.length) return null;
-    return y;
+function getGallery(contest, year) {
+  const contestCfg = GALLERY_CONFIG[contest];
+  if (!contestCfg) return null;
+
+  const cfg = contestCfg[year];
+  if (!cfg) return null;
+
+  const images = [];
+  for (let i = 1; i <= cfg.count; i++) {
+    const numStr = String(i).padStart(3, "0"); // 1 → "001"
+    images.push({
+      url: `${cfg.baseUrl}/${numStr}.jpg`,
+      caption: `${cfg.label} — №${i}`
+    });
   }
+  return images;
+}
+
 
   // ===== 2. СОСТОЯНИЕ ВЬЮЕРА =====
   const viewer = document.getElementById("viewer");
