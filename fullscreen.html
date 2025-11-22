@@ -97,6 +97,19 @@
       opacity: 0.85;
     }
 
+    .source {
+      margin-top: 4px;
+      font-size: 11px;
+      opacity: 0.7;
+      line-height: 1.3;
+    }
+    
+    .source a {
+      color: inherit;
+      text-decoration: underline;
+    }
+    
+
     .header {
       position: absolute;
       left: 0;
@@ -133,6 +146,11 @@
   <div class="footer">
     <div class="counter" id="counter"></div>
     <div class="caption" id="caption"></div>
+    <div class="source">
+      Источник фото:
+      <a href="https://aqualibs.com" target="_blank" rel="noopener noreferrer">aqualibs.com</a><br>
+      Полезный и информативный источник информации по Nature Aquarium
+    </div>
   </div>
 </div>
 
@@ -216,8 +234,14 @@ const GALLERY_CONFIG = {
       label: "IAPLC 2001",
       ext: "webp",
       pad: 0,
-      suffixFrom: 11, // начиная с 11-й работы
-      suffix: "a"     // добавляем букву "a": 11a.webp, 12a.webp и т.д.
+      // с 11-й работы идут файлы вида 11a.webp, 12a.webp и т.п.
+      suffixFrom: 11,
+      suffix: "a",
+      // оверрайд для отсутствующих картинок
+      overrides: {
+        16: "https://raw.githubusercontent.com/krapivnikslab/repo_img/main/images/161c40a1f1ee02423391094e060a1c32b8.jpg",
+        23: "https://raw.githubusercontent.com/krapivnikslab/repo_img/main/images/23161c40a1f1ee02423391094e060a1c32b8.jpg"
+      }
     }
   },
   kiac: {
@@ -308,8 +332,13 @@ function getGallery(contest, year) {
       const pad = typeof seg.pad === "number" ? seg.pad : 2;
       for (let n = seg.from; n <= seg.to; n++) {
         const numStr = pad > 0 ? String(n).padStart(pad, "0") : String(n);
+        let url = `${seg.baseUrl}/${numStr}.${ext}`;
+        // оверрайд для конкретных номеров (если задан в конфиге года)
+        if (cfg.overrides && cfg.overrides[n]) {
+          url = cfg.overrides[n];
+        }
         images.push({
-          url: `${seg.baseUrl}/${numStr}.${ext}`,
+          url,
           caption: `${label} — №${n}`,
         });
       }
@@ -328,15 +357,20 @@ function getGallery(contest, year) {
   for (let i = 1; i <= cfg.count; i++) {
     const numStr = pad > 0 ? String(i).padStart(pad, "0") : String(i);
     const name = suffixFrom !== null && i >= suffixFrom ? numStr + suffix : numStr;
+    let url = `${cfg.baseUrl}/${name}.${ext}`;
+    // и тут тоже даем возможность переопределить URL
+    if (cfg.overrides && cfg.overrides[i]) {
+      url = cfg.overrides[i];
+    }
     images.push({
-      url: `${cfg.baseUrl}/${name}.${ext}`,
+      url,
       caption: `${label} — №${i}`,
     });
   }
 
   return images;
-
 }
+
 
 
 
