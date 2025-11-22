@@ -215,7 +215,9 @@ const GALLERY_CONFIG = {
       count: 27,
       label: "IAPLC 2001",
       ext: "webp",
-      pad: 0
+      pad: 0,
+      suffixFrom: 11, // начиная с 11-й работы
+      suffix: "a"     // добавляем букву "a": 11a.webp, 12a.webp и т.д.
     }
   },
   kiac: {
@@ -318,18 +320,22 @@ function getGallery(contest, year) {
   // Обычный вариант (IAPLC, KIAC 2022 и т.п.)
   const ext = cfg.ext || "jpg";
   const pad = typeof cfg.pad === "number" ? cfg.pad : 3;
+  const suffixFrom = typeof cfg.suffixFrom === "number" ? cfg.suffixFrom : null;
+  const suffix = typeof cfg.suffix === "string" ? cfg.suffix : "";
   const images = [];
   const label = cfg.label || `${contest.toUpperCase()} ${year}`;
 
   for (let i = 1; i <= cfg.count; i++) {
     const numStr = pad > 0 ? String(i).padStart(pad, "0") : String(i);
+    const name = suffixFrom !== null && i >= suffixFrom ? numStr + suffix : numStr;
     images.push({
-      url: `${cfg.baseUrl}/${numStr}.${ext}`,
+      url: `${cfg.baseUrl}/${name}.${ext}`,
       caption: `${label} — №${i}`,
     });
   }
 
   return images;
+
 }
 
 
