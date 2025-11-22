@@ -220,20 +220,65 @@ const GALLERY_CONFIG = {
   },
   kiac: {
     2024: {
-      baseUrl: "https://aqualibs.com/images/contest/kiac/2024",
-      count: 50,
-      label: "IAPLC 2024",
-      ext: "webp",
-      pad: 2
+      label: "KIAC 2024 Top50"
+      segments: [
+        {
+          from: 1,
+          to: 10,
+          baseUrl: "https://aqualibs.com/images/contest/kiac/2024/top10",
+          ext: "webp",
+          pad: 2, // 01.webp..10.webp
+        },
+        {
+          from: 11,
+          to: 30,
+          baseUrl: "https://aqualibs.com/images/contest/kiac/2024/top30",
+          ext: "webp",
+          pad: 2, // 11.webp..30.webp
+        },
+        {
+          from: 31,
+          to: 50,
+          baseUrl: "https://aqualibs.com/images/contest/kiac/2024/top50",
+          ext: "webp",
+          pad: 2, // 31.webp..50.webp
+        },
+      ],
     },
     2023: {
-      baseUrl: "https://aqualibs.com/images/contest/kiac/2023",
+      label: "KIAC 2023 Top50"
+      segments: [
+        {
+          from: 1,
+          to: 10,
+          baseUrl: "https://aqualibs.com/images/contest/kiac/2023/top10",
+          ext: "webp",
+          pad: 2, // 01.webp..10.webp
+        },
+        {
+          from: 11,
+          to: 30,
+          baseUrl: "https://aqualibs.com/images/contest/kiac/2023/top30",
+          ext: "webp",
+          pad: 2, // 11.webp..30.webp
+        },
+        {
+          from: 31,
+          to: 50,
+          baseUrl: "https://aqualibs.com/images/contest/kiac/2023/top50",
+          ext: "webp",
+          pad: 2, // 31.webp..50.webp
+        },
+      ],
+    },
+    2022: {
+      baseUrl: "https://aqualibs.com/images/contest/kiac/2022",
       count: 50,
-      label: "IAPLC 2023",
+      label: "KIAC 2022 Top50",
       ext: "webp",
       pad: 2
     }
-  // сюда же потом можно добавить другие конкурсы/годы
+  }
 };
 
   function parseQuery() {
@@ -252,21 +297,41 @@ function getGallery(contest, year) {
   const cfg = contestCfg[year];
   if (!cfg) return null;
 
+  // Вариант с сегментами (KIAC 2024/2023)
+  if (Array.isArray(cfg.segments)) {
+    const images = [];
+    const label = cfg.label || `${contest.toUpperCase()} ${year}`;
+    for (const seg of cfg.segments) {
+      const ext = seg.ext || cfg.ext || "webp";
+      const pad = typeof seg.pad === "number" ? seg.pad : 2;
+      for (let n = seg.from; n <= seg.to; n++) {
+        const numStr = pad > 0 ? String(n).padStart(pad, "0") : String(n);
+        images.push({
+          url: `${seg.baseUrl}/${numStr}.${ext}`,
+          caption: `${label} — №${n}`,
+        });
+      }
+    }
+    return images;
+  }
+
+  // Обычный вариант (IAPLC, KIAC 2022 и т.п.)
   const ext = cfg.ext || "jpg";
   const pad = typeof cfg.pad === "number" ? cfg.pad : 3;
-
   const images = [];
+  const label = cfg.label || `${contest.toUpperCase()} ${year}`;
 
   for (let i = 1; i <= cfg.count; i++) {
     const numStr = pad > 0 ? String(i).padStart(pad, "0") : String(i);
     images.push({
       url: `${cfg.baseUrl}/${numStr}.${ext}`,
-      caption: `${cfg.label} — №${i}`,
+      caption: `${label} — №${i}`,
     });
   }
 
   return images;
 }
+
 
 
 
