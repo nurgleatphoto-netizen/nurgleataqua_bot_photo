@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Aquascape fullscreen viewer</title>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      color: #fff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+
+    .viewer {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      touch-action: none; /* перехватываем жесты */
+    }
+
+    .image-wrapper {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .image-wrapper img {
+      max-width: 100%;
+      max-height: 100%;
+      transform-origin: center center;
+      will-change: transform;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+    }
+
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 10px 14px;
+      font-size: 22px;
+      border-radius: 999px;
+      cursor: pointer;
+      color: #fff;
+      user-select: none;
+    }
+
+    .nav-btn:active {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .nav-prev {
+      left: 10px;
+    }
+
+    .nav-next {
+      right: 10px;
+    }
+
+    .footer {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 8px 12px 12px;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0));
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .counter {
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 2px;
+    }
+
+    .caption {
+      opacity: 0.85;
+    }
+
+    .header {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      padding: 8px 12px 12px;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0));
+      font-size: 13px;
+      text-align: center;
+      opacity: 0.9;
+    }
+
+    .header span {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.6);
+    }
+  </style>
+</head>
+<body>
+<div class="viewer" id="viewer">
+  <div class="image-wrapper">
+    <img id="mainImage" src="" alt="Aquascape">
+  </div>
+
+  <button class="nav-btn nav-prev" id="btnPrev">&#10094;</button>
+  <button class="nav-btn nav-next" id="btnNext">&#10095;</button>
+
+  <div class="header">
+    <span id="headerLabel"></span>
+  </div>
+
+  <div class="footer">
+    <div class="counter" id="counter"></div>
+    <div class="caption" id="caption"></div>
+  </div>
+</div>
+
+<script>
+  // ===== 1. ДАННЫЕ ГАЛЕРЕЙ =====
+  // TODO: ЗАМЕНИ ЭТИ URL НА РЕАЛЬНЫЕ 4 ФОТО IAPLC 2025
+  const GALLERIES = {
+    iaplc: {
+      2025: [
+        {
+          url: "https://cloud.jicefrost.com/index.php/s/2pSpFSknxM7ZLiN/download/001.jpg",
+          caption: "IAPLC 2025 — №1"
+        },
+        {
+          url: "https://cloud.jicefrost.com/index.php/s/SiKSe3cm4ccbjWK/download/002.jpg",
+          caption: "IAPLC 2025 — №2"
+        },
+        {
+          url: "https://cloud.jicefrost.com/index.php/s/A2t7qA8XHzAocj3/download/003.jpg",
+          caption: "IAPLC 2025 — №3"
+        },
+        {
+          url: "https://cloud.jicefrost.com/index.php/s/5iBKBYBwXke5w6G/download/004.jpg",
+          caption: "IAPLC 2025 — №4"
+        },
+        {
+          url: "https://cloud.jicefrost.com/index.php/s/Z2feJdCKr9EJcH6/download/005.jpg",
+          caption: "IAPLC 2025 — №5"
+        },
+        {
+          url: "https://cloud.jicefrost.com/index.php/s/PFQaGp7XmZNEtZf/download/006.jpg",
+          caption: "IAPLC 2025 — №6"
+        }
+      ]
+      2024: [
+        {
+          url: "https://cloud.jicefrost.com/index.php/s/bQazzxt5ZckyrKs/download/001.jpg",
+          caption: "IAPLC 2024 — №1"
+        },
+        {
+          url: "https://cloud.jicefrost.com/index.php/s/rZk7MfzbRstyAX9/download/002.jpg",
+          caption: "IAPLC 2024 — №2"
+        },
+        {
+          url: "https://cloud.jicefrost.com/index.php/s/NsXNYPWKS6fJsrK/download/003.jpg",
+          caption: "IAPLC 2024 — №3"
+        },
+        {
+          url: "https://cloud.jicefrost.com/index.php/s/nJNxfxTGASJcayZ/download/004.jpgg",
+          caption: "IAPLC 2024 — №4"
+        },
+        {
+          url: "https://cloud.jicefrost.com/index.php/s/TEnCoQiSo6qATwe/download/005.jpg",
+          caption: "IAPLC 2024 — №5"
+        },
+        {
+          url: "https://cloud.jicefrost.com/index.php/s/xSfEPBjdXspmgGD/download/006.jpg",
+          caption: "IAPLC 2024 — №6"
+        },
+        {
+          url: "https://cloud.jicefrost.com/index.php/s/Em2ZJeZgTNMkb63/download/007.jpg"
+          ,
+          caption: "IAPLC 2024 — №7"
+        }
+      ]
+    }
+  };
+
+  function parseQuery() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      contest: (params.get("contest") || "iaplc").toLowerCase(),
+      year: parseInt(params.get("year") || "2025", 10),
+      idx: parseInt(params.get("idx") || "0", 10)
+    };
+  }
+
+  function getGallery(contest, year) {
+    const c = GALLERIES[contest];
+    if (!c) return null;
+    const y = c[year];
+    if (!y || !y.length) return null;
+    return y;
+  }
+
+  // ===== 2. СОСТОЯНИЕ ВЬЮЕРА =====
+  const viewer = document.getElementById("viewer");
+  const imgEl = document.getElementById("mainImage");
+  const counterEl = document.getElementById("counter");
+  const captionEl = document.getElementById("caption");
+  const headerLabelEl = document.getElementById("headerLabel");
+  const btnPrev = document.getElementById("btnPrev");
+  const btnNext = document.getElementById("btnNext");
+
+  const params = parseQuery();
+  const images = getGallery(params.contest, params.year) || [];
+  let current = Math.min(Math.max(params.idx || 0, 0), Math.max(images.length - 1, 0));
+
+  // масштаб и панорамирование
+  let scale = 1;
+  const MIN_SCALE = 1;
+  const MAX_SCALE = 3;
+
+  let offsetX = 0;
+  let offsetY = 0;
+
+  // жесты
+  let swipeStartX = null;
+  let swipeStartY = null;
+  let pinchStartDistance = null;
+  let pinchStartScale = 1;
+
+  const SWIPE_THRESHOLD = 50; // px
+
+  function setHeaderLabel() {
+    headerLabelEl.textContent = params.contest.toUpperCase() + " " + params.year;
+  }
+
+  function applyTransform() {
+    imgEl.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0) scale(${scale})`;
+  }
+
+  function resetTransform() {
+    scale = 1;
+    offsetX = 0;
+    offsetY = 0;
+    applyTransform();
+  }
+
+  function showImage(index) {
+    if (!images.length) return;
+    const total = images.length;
+    current = (index + total) % total;
+    const item = images[current];
+    imgEl.src = item.url;
+    counterEl.textContent = (current + 1) + " / " + total;
+    captionEl.textContent = item.caption || "";
+    resetTransform();
+  }
+
+  function showNext() {
+    showImage(current + 1);
+  }
+
+  function showPrev() {
+    showImage(current - 1);
+  }
+
+  function distanceBetweenTouches(t1, t2) {
+    const dx = t2.clientX - t1.clientX;
+    const dy = t2.clientY - t1.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  // ===== 3. ОБРАБОТКА ЖЕСТОВ =====
+  viewer.addEventListener("touchstart", function (e) {
+    if (e.touches.length === 1) {
+      swipeStartX = e.touches[0].clientX;
+      swipeStartY = e.touches[0].clientY;
+    } else if (e.touches.length === 2) {
+      pinchStartDistance = distanceBetweenTouches(e.touches[0], e.touches[1]);
+      pinchStartScale = scale;
+    }
+  }, { passive: false });
+
+  viewer.addEventListener("touchmove", function (e) {
+    if (e.touches.length === 2) {
+      // пинч-зуум
+      e.preventDefault();
+      const dist = distanceBetweenTouches(e.touches[0], e.touches[1]);
+      if (pinchStartDistance) {
+        const factor = dist / pinchStartDistance;
+        scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, pinchStartScale * factor));
+        applyTransform();
+      }
+    } else if (e.touches.length === 1 && scale > 1) {
+      // панорамирование при увеличении
+      e.preventDefault();
+      const touch = e.touches[0];
+      const dx = touch.clientX - swipeStartX;
+      const dy = touch.clientY - swipeStartY;
+      swipeStartX = touch.clientX;
+      swipeStartY = touch.clientY;
+      offsetX += dx;
+      offsetY += dy;
+      applyTransform();
+    }
+  }, { passive: false });
+
+  viewer.addEventListener("touchend", function (e) {
+    // если было 2 пальца, сбрасываем пинч
+    if (e.touches.length < 2) {
+      pinchStartDistance = null;
+    }
+
+    // свайп для листания — только если масштаб почти 1
+    if (e.touches.length === 0 && swipeStartX !== null && scale <= 1.05) {
+      const changed = e.changedTouches[0];
+      const dx = changed.clientX - swipeStartX;
+      if (dx > SWIPE_THRESHOLD) {
+        showPrev();
+      } else if (dx < -SWIPE_THRESHOLD) {
+        showNext();
+      }
+    }
+
+    if (e.touches.length === 0) {
+      swipeStartX = null;
+      swipeStartY = null;
+    }
+  });
+
+  // стрелки на экране
+  btnNext.addEventListener("click", showNext);
+  btnPrev.addEventListener("click", showPrev);
+
+  // стрелки на клавиатуре (для десктопа)
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowRight") showNext();
+    if (e.key === "ArrowLeft") showPrev();
+  });
+
+  // ===== 4. ИНИЦИАЛИЗАЦИЯ =====
+  if (!images.length) {
+    captionEl.textContent = "Галерея не найдена";
+    counterEl.textContent = "";
+    imgEl.style.display = "none";
+  } else {
+    setHeaderLabel();
+    showImage(current);
+  }
+</script>
+</body>
+</html>
