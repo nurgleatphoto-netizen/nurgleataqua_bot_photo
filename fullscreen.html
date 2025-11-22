@@ -143,22 +143,26 @@ const GALLERY_CONFIG = {
     2025: {
       baseUrl: "https://aqualibs.com/images/contest/iaplc/2025/gallery",
       count: 300,
-      label: "IAPLC 2025"
+      label: "IAPLC 2025",
+      ext: "jpg"
     },
     2024: {
       baseUrl: "https://aqualibs.com/images/contest/iaplc/2024/gallery",
       count: 300,
-      label: "IAPLC 2024"
+      label: "IAPLC 2024",
+      ext: "webp"
     },
     2023: {
       baseUrl: "https://aqualibs.com/images/contest/iaplc/2023/gallery",
       count: 300,
-      label: "IAPLC 2023"
+      label: "IAPLC 2023",
+      ext: "webp"
     },
     2008: {
-      baseUrl: "https://aqualibs.com/images/contest/iaplc/2008/gallery",
+      baseUrl: "https://aqualibs.com/images/contest/iaplc/2008",
       count: 27,
-      label: "IAPLC 2008"
+      label: "IAPLC 2008",
+      ext: "webp"
     }
   }
   // сюда же потом можно добавить другие конкурсы/годы
@@ -180,16 +184,20 @@ function getGallery(contest, year) {
   const cfg = contestCfg[year];
   if (!cfg) return null;
 
+  const ext = cfg.ext || "jpg";  // на всякий случай дефолт
   const images = [];
+
   for (let i = 1; i <= cfg.count; i++) {
-    const numStr = String(i).padStart(3, "0"); // 1 → "001"
+    const numStr = String(i).padStart(3, "0"); // 1 -> "001"
     images.push({
-      url: `${cfg.baseUrl}/${numStr}.jpg`,
+      url: `${cfg.baseUrl}/${numStr}.${ext}`,
       caption: `${cfg.label} — №${i}`
     });
   }
+
   return images;
 }
+
 
 
   // ===== 2. СОСТОЯНИЕ ВЬЮЕРА =====
