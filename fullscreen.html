@@ -405,14 +405,14 @@ const GALLERY_CONFIG = {
   }
 };
 
-  function parseQuery() {
-    const params = new URLSearchParams(window.location.search);
-    return {
-      contest: (params.get("contest") || "iaplc").toLowerCase(),
-      year: parseInt(params.get("year") || "2025", 10),
-      idx: parseInt(params.get("idx") || "0", 10)
-    };
-  }
+function parseQuery() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    contest: (params.get("contest") || "iaplc").toLowerCase(),
+    year: parseInt(params.get("year") || "2025", 10),
+    idx: parseInt(params.get("idx") || "0", 10)
+  };
+}
 
 function getGallery(contest, year) {
   const contestCfg = GALLERY_CONFIG[contest];
@@ -460,6 +460,10 @@ function getGallery(contest, year) {
   // шаблон имени файла, если нужен (IAPLC 2017 и т.п.)
   const pattern = typeof cfg.pattern === "string" ? cfg.pattern : null;
 
+  // префикс/суффикс вокруг базового имени (IAPLC 2016 и др.)
+  const namePrefix = typeof cfg.namePrefix === "string" ? cfg.namePrefix : "";
+  const nameSuffix = typeof cfg.nameSuffix === "string" ? cfg.nameSuffix : "";
+
   const images = [];
   const label = cfg.label || `${contest.toUpperCase()} ${year}`;
 
@@ -473,13 +477,13 @@ function getGallery(contest, year) {
       const z = i - 1;     // 0-based
 
       fileName = pattern
-        .replace(/{i3}/g, String(rank).padStart(3, "0")) // при желании
+        .replace(/{i3}/g, String(rank).padStart(3, "0"))
         .replace(/{i}/g, String(rank))
         .replace(/{z4}/g, String(z).padStart(4, "0"))
         .replace(/{z}/g, String(z))
-        .replace(/{n}/g, String(rank)); // alias, если вдруг понадобится
+        .replace(/{n}/g, String(rank));
     } else {
-      fileName = base;
+      fileName = namePrefix + base + nameSuffix;
     }
 
     let url = `${cfg.baseUrl}/${fileName}.${ext}`;
@@ -497,4 +501,147 @@ function getGallery(contest, year) {
 
   return images;
 }
+
+// ===== 3. ЛОГИКА ВЬЮЕРА =====
+
+(function () {
+  const imgEl = document.getElementById("mainImage");
+  const counterEl = document.getElementById("counter");
+  const captionEl = document.getElementById("caption");
+  const headerLabelEl = document.getElementById("headerLabel");
+  const btnPrev = document.getElementById("btnPrev");
+  const btnNext = document.getElementById("btnNext");
+  const viewerEl = document.getElementById("viewer");
+
+  const query = parseQuery();
+  const gallery = getGallery(query.contest, query.year);
+
+  if (!gallery || !gallery.length) {
+    captionEl.textContent = "Галерея не найдена или пока не заполнена.";
+    headerLabelEl.textContent = "Aquascape";
+    imgEl.style.display = "none";
+    btnPrev.style.display = "none";
+    btnNext.style.display = "none";
+    return;
+  }
+
+  const cfgContest = GALLERY_CONFIG[query.contest] || {};
+  const cfgYear = cfgContest[query.year] || {};
+  const headerLabel = cfgYear.label || (String(query.contest).toUpperCase() + " " + query.year);
+
+  headerLabelEl.textContent = headerLabel;
+
+  let currentIndex = Math.min(Math.max(query.idx || 0, 0), gallery.length - 1);
+
+  // состояние зума/панорамирования
+  let scale = 1;
+  let offsetX = 0;
+  let offsetY = 0;
+  let isPanning = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  let pinchStartDistance = 0;
+  let pinchStartScale = 1;
+
+  function applyTransform() {
+    imgEl.style.transform = "translate(" + offsetX + "px, " + offsetY + "px) scale(" + scale + ")";
+  }
+
+  function resetTransform() {
+    scale = 1;
+    offsetX = 0;
+    offsetY = 0;
+    applyTransform();
+  }
+
+  function updateView() {
+    const item = gallery[currentIndex];
+    imgEl.src = item.url;
+    captionEl.textContent = item.caption || "";
+    counterEl.textContent = (currentIndex + 1) + " / " + gallery.length;
+    resetTransform();
+  }
+
+  imgEl.onerror = function () {
+    captionEl.textContent = "Не удалось загрузить изображение.";
+  };
+
+  btnPrev.addEventListener("click", function () {
+    if (currentIndex > 0) {
+      currentIndex -= 1;
+      updateView();
+    }
+  });
+
+  btnNext.addEventListener("click", function () {
+    if (currentIndex < gallery.length - 1) {
+      currentIndex += 1;
+      updateView();
+    }
+  });
+
+  // Панорамирование и зум на тач-устройствах
+  viewerEl.addEventListener("touchstart", function (ev) {
+    if (ev.touches.length === 1) {
+      isPanning = true;
+      lastX = ev.touches[0].clientX;
+      lastY = ev.touches[0].clientY;
+    } else if (ev.touches.length === 2) {
+      isPanning = false;
+      const dx = ev.touches[0].clientX - ev.touches[1].clientX;
+      const dy = ev.touches[0].clientY - ev.touches[1].clientY;
+      pinchStartDistance = Math.hypot(dx, dy);
+      pinchStartScale = scale;
+    }
+  }, { passive: false });
+
+  viewerEl.addEventListener("touchmove", function (ev) {
+    if (ev.touches.length === 1 && isPanning && scale > 1) {
+      ev.preventDefault();
+      const x = ev.touches[0].clientX;
+      const y = ev.touches[0].clientY;
+      const dx = x - lastX;
+      const dy = y - lastY;
+      lastX = x;
+      lastY = y;
+      offsetX += dx;
+      offsetY += dy;
+      applyTransform();
+    } else if (ev.touches.length === 2) {
+      ev.preventDefault();
+      const dx = ev.touches[0].clientX - ev.touches[1].clientX;
+      const dy = ev.touches[0].clientY - ev.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      if (pinchStartDistance > 0) {
+        let newScale = pinchStartScale * (dist / pinchStartDistance);
+        if (newScale < 1) newScale = 1;
+        if (newScale > 4) newScale = 4;
+        scale = newScale;
+        applyTransform();
+      }
+    }
+  }, { passive: false });
+
+  viewerEl.addEventListener("touchend", function (ev) {
+    if (ev.touches && ev.touches.length === 0) {
+      isPanning = false;
+      pinchStartDistance = 0;
+    }
+  });
+
+  viewerEl.addEventListener("dblclick", function () {
+    resetTransform();
+  });
+
+  // стартовое отображение
+  updateView();
+})();
+
+</script>
+</body>
+</html>
+
+
+
 
