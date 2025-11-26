@@ -334,10 +334,8 @@ const GALLERY_CONFIG = {
       label: "IAPLC 2001",
       ext: "webp",
       pad: 0,
-      // с 11-й работы идут файлы вида 11a.webp, 12a.webp и т.п.
       suffixFrom: 11,
       suffix: "a",
-      // оверрайд для отсутствующих картинок
       overrides: {
         16: "https://raw.githubusercontent.com/krapivnikslab/repo_img/main/images/161c40a1f1ee02423391094e060a1c32b8.jpg",
         23: "https://raw.githubusercontent.com/krapivnikslab/repo_img/main/images/23161c40a1f1ee02423391094e060a1c32b8.jpg"
@@ -416,7 +414,7 @@ const GALLERY_CONFIG = {
     };
   }
 
-function getGallery(contest, yefunction getGallery(contest, year) {
+function getGallery(contest, year) {
   const contestCfg = GALLERY_CONFIG[contest];
   if (!contestCfg) return null;
 
